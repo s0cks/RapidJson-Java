@@ -31,8 +31,6 @@ public class InstanceFactoryTest {
 
     public static void main(String... args)
     throws Exception{
-        Colors c = rapidJson.fromJson(json, Colors.class);
-        System.out.println(rapidJson.toJson(c));
     }
 
     private static final class Colors{

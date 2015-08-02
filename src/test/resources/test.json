@@ -1,14 +1,1 @@
-{
-  "colors":[
-    "#FFFFFF",
-    "#000000",
-    "#309743",
-    "#394794"
-  ],
-  "flags":[
-    true, false, true, false
-  ],
-  "names":[
-    "Bob", "Jim", "John", "George"
-  ]
-}
+[]

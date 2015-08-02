@@ -56,9 +56,11 @@ public final class JsonParser{
                     break;
                 }
             }
+
             if(c == ':'){
                 c = this.nextReal();
             }
+
             if (c == '"') {
                 values.put(this.name, this.parseString());
             } else if (isNumber(c)) {
@@ -67,14 +69,14 @@ public final class JsonParser{
                 values.put(this.name, this.parseBoolean(c));
             } else if (isNull(c)) {
                 values.put(this.name, this.parseNull());
-            } else if (c == '{') {
-                values.put(this.name, this.parseObject());
             } else if(c == '['){
                 values.put(this.name, this.parseArray());
             } else if(c == '\0'){
                 throw new JsonException("Invalid Syntax [end of document]@" + this.col + "," + this.row);
-            } else {
-                throw new JsonException("Invalid syntax @ " + this.name + " with[" + c + "]@" + this.col + "," + this.row);
+            } else if(c == '}'){
+                break;
+            } else{
+                throw new JsonException("Invalid syntax @ " + this.name + " with (" + c + ") @" + this.col + "," + this.row);
             }
         }
 
@@ -85,7 +87,7 @@ public final class JsonParser{
     throws JsonException{
         List<Value> values = new LinkedList<>();
         char c;
-        while((c = this.nextReal()) != ']'){
+        while((c = this.nextReal()) != '\0'){
             if (c == '"') {
                 values.add(this.parseString());
             } else if (isNumber(c)) {
@@ -100,9 +102,9 @@ public final class JsonParser{
                 values.add(this.parseArray());
             } else if(c == ','){
                 // Fallthrough
-            } else if(c == '\0'){
-                throw new JsonException("Invalid syntax [end of document]@" + this.col + "," + this.row);
-            } else{
+            } else if(c == ']'){
+                break;
+            } else {
                 throw new JsonException("Invalid syntax " + this.name + ":" + c + "@" + this.col + "," + this.row);
             }
         }
@@ -115,6 +117,7 @@ public final class JsonParser{
         while(this.isNumber(c = this.next()) || (c == '.' && !buffer.contains("."))){
             buffer += c;
         }
+        System.out.println(buffer);
         return new Values.NumberValue(this.name, new FlexibleNumber(buffer));
     }
 
