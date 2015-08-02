@@ -1,5 +1,6 @@
 package io.github.s0cks.rapidjson.reflect;
 
+import io.github.s0cks.rapidjson.Name;
 import io.github.s0cks.rapidjson.RapidJson;
 import io.github.s0cks.rapidjson.RapidJsonBuilder;
 import io.github.s0cks.rapidjson.reflect.adapter.ColorTypeAdapter;
@@ -31,10 +32,12 @@ public class InstanceFactoryTest {
 
     public static void main(String... args)
     throws Exception{
+        Colors c = rapidJson.fromJson(json, Colors.class);
+        System.out.println(rapidJson.toJson(c));
     }
 
     private static final class Colors{
-        private final Color[] colors;
+        @Name("colorz") private final Color[] colors;
         private final boolean[] flags;
         private final String[] names;
 

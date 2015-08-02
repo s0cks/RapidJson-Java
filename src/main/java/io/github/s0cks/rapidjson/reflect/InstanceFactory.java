@@ -1,6 +1,7 @@
 package io.github.s0cks.rapidjson.reflect;
 
 import io.github.s0cks.rapidjson.JsonException;
+import io.github.s0cks.rapidjson.Name;
 import io.github.s0cks.rapidjson.Value;
 import io.github.s0cks.rapidjson.Values;
 import io.github.s0cks.rapidjson.reflect.adapter.TypeAdapters;
@@ -44,20 +45,24 @@ public final class InstanceFactory{
                 for(int i = 0; i < values.length; i++){
                     values[i] = (isGeneric(type) ? Values.of("<array>", Array.get(array, i)) : (this.adapters.get(type) != null ? this.adapters.get(type).serialize(Array.get(array, i)) : new Values.NullValue("<array>")));
                 }
-                root.setValue(field.getName(), new Values.ArrayValue(field.getName(), values));
+                root.setValue(this.getFieldName(field), new Values.ArrayValue(field.getName(), values));
             } else{
                 this.emitField(t, field, type, root);
             }
         }
     }
 
+    private String getFieldName(Field f){
+        return f.isAnnotationPresent(Name.class) ? f.getAnnotation(Name.class).value() : f.getName();
+    }
+
     @SuppressWarnings("unchecked")
     private <T> void emitField(T instance, Field f, Type type, Value root)
     throws IllegalAccessException, JsonException {
         if(isGeneric(type)){
-            root.setValue(f.getName(), Values.of(instance, f));
+            root.setValue(this.getFieldName(f), Values.of(instance, f));
         } else if(this.adapters.containsKey(type)){
-            root.setValue(f.getName(), this.adapters.get(type).serialize(f.get(instance)));
+            root.setValue(this.getFieldName(f), this.adapters.get(type).serialize(f.get(instance)));
         } else{
             throw new JsonException("No type adapter for type: " + type);
         }
@@ -99,16 +104,16 @@ public final class InstanceFactory{
                     modField.setAccessible(true);
                     modField.setInt(field, mods & ~Modifier.FINAL);
                     if(isGeneric(type)){
-                        set(instance, ftype, field, value.getValue(field.getName()));
+                        set(instance, ftype, field, value.getValue(getFieldName(field)));
                     } else{
-                        field.set(instance, this.create(Types.getRawType(ftype), value.getValue(field.getName())));
+                        field.set(instance, this.create(Types.getRawType(ftype), value.getValue(getFieldName(field))));
                     }
                     modField.set(field, mods);
                 } else{
                     if(isGeneric(type)){
-                        set(instance, ftype, field, value.getValue(field.getName()));
+                        set(instance, ftype, field, value.getValue(getFieldName(field)));
                     } else{
-                        field.set(instance, this.create(Types.getRawType(ftype), value.getValue(field.getName())));
+                        field.set(instance, this.create(Types.getRawType(ftype), value.getValue(getFieldName(field))));
                     }
                 }
             }

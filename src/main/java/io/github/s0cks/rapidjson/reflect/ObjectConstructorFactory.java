@@ -4,7 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 
-public final class ObjectConstructorFactory{
+final class ObjectConstructorFactory{
     public static <T> ObjectConstructor<T> get(TypeToken<T> token){
         Type type = token.type;
         Class<? super T> rawType = token.rawType;

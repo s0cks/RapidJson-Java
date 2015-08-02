@@ -20,6 +20,6 @@ public class JsonParserTest {
 
         JsonParser parser = new JsonParser(builder.toString());
         Value v = parser.parse();
-        System.out.println(v.getValue("colorsArray").asArray()[0].getValue("colorName").asString());
+        System.out.println(v);
     }
 }
