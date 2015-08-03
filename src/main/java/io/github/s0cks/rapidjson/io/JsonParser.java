@@ -80,7 +80,7 @@ public final class JsonParser{
             }
         }
 
-        return Values.of((this.name == null ? "<root>" : this.name), values);
+        return Values.of(values);
     }
 
     private Value parseArray()
@@ -109,7 +109,7 @@ public final class JsonParser{
             }
         }
 
-        return Values.of((this.name == null ? "<root>" : this.name), values);
+        return Values.of(values);
     }
 
     private Value parseNumber(char c){
@@ -118,14 +118,14 @@ public final class JsonParser{
             buffer += c;
         }
         System.out.println(buffer);
-        return new Values.NumberValue(this.name, new FlexibleNumber(buffer));
+        return new Values.NumberValue(new FlexibleNumber(buffer));
     }
 
     private Value parseNull(){
         for(int i = 0; i < 4; i++){
             this.next();
         }
-        return new Values.NullValue(this.name);
+        return Values.NullValue.NULL;
     }
 
     private Value parseBoolean(char c)
@@ -135,13 +135,13 @@ public final class JsonParser{
                 for(int i = 0; i < 3; i++){
                     this.next();
                 }
-                return new Values.BooleanValue(this.name, true);
+                return Values.BooleanValue.TRUE;
             }
             case 'f':{
                 for(int i = 0; i < 4; i++){
                     this.next();
                 }
-                return new Values.BooleanValue(this.name, false);
+                return Values.BooleanValue.FALSE;
             }
             default:{
                 throw new JsonException("Invalid syntax @" + this.col + "," + this.row);
@@ -188,7 +188,7 @@ public final class JsonParser{
                 }
             }
         }
-        return new Values.StringValue(this.name, buffer);
+        return new Values.StringValue(buffer);
     }
 
     private boolean isNumber(char c){

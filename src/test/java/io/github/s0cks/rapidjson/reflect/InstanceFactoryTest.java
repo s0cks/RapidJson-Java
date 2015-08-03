@@ -1,13 +1,14 @@
 package io.github.s0cks.rapidjson.reflect;
 
-import io.github.s0cks.rapidjson.Name;
 import io.github.s0cks.rapidjson.RapidJson;
 import io.github.s0cks.rapidjson.RapidJsonBuilder;
-import io.github.s0cks.rapidjson.reflect.adapter.ColorTypeAdapter;
 
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class InstanceFactoryTest {
     private static String json;
@@ -27,17 +28,24 @@ public class InstanceFactoryTest {
     }
 
     private static final RapidJson rapidJson = new RapidJsonBuilder()
-            .registerTypeAdapter(Color.class, new ColorTypeAdapter())
-                                                          .build();
+            .build();
 
     public static void main(String... args)
     throws Exception{
-        Colors c = rapidJson.fromJson(json, Colors.class);
-        System.out.println(rapidJson.toJson(c));
+        long start = System.nanoTime();
+        List<Name> names = rapidJson.fromJson(json, new TypeToken<LinkedList<Name>>(){});
+        System.out.println("Deserialization Took: " + TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)) + "ms");
+        for(Name name : names){
+            System.out.println(name);
+        }
+    }
+
+    private enum Name{
+        GEORGE, BOB, JIM;
     }
 
     private static final class Colors{
-        @Name("colorz") private final Color[] colors;
+        @io.github.s0cks.rapidjson.Name("colorz") private final Color[] colors;
         private final boolean[] flags;
         private final String[] names;
 

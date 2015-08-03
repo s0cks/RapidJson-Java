@@ -1,10 +1,10 @@
-package io.github.s0cks.rapidjson.io;
+package io.github.s0cks.rapidjson;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public final class IO{
+final class IO{
     private IO(){}
 
     public static String consume(InputStream in){

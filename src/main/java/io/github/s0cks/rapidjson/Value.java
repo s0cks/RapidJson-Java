@@ -1,7 +1,6 @@
 package io.github.s0cks.rapidjson;
 
 public interface Value{
-    public String name();
     public byte asByte();
     public short asShort();
     public int asInt();
@@ -13,7 +12,6 @@ public interface Value{
     public char asChar();
     public String asString();
     public String write();
-    public Value asObject();
     public Value getValue(String name);
     public Value[] asArray();
     public void setValue(String name, Value v);

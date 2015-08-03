@@ -16,31 +16,27 @@ public final class Values{
 
     public static Value of(Object instance, Field f){
         try {
-            return Values.of(f.getName(), f.get(instance));
+            return Values.of(f.get(instance));
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
 
     @SuppressWarnings("unchecked")
-    public static Value of(String name, Object obj){
-        if(name == null){
-            throw new IllegalArgumentException("Name cannot be null");
-        }
-
+    public static Value of(Object obj){
         if(obj == null){
-            return new NullValue(name);
+            return new NullValue();
         } else if(obj instanceof Number){
-            return new NumberValue(name, (Number) obj);
+            return new NumberValue((Number) obj);
         } else if(obj instanceof String){
-            return new StringValue(name, String.valueOf(obj));
+            return new StringValue(String.valueOf(obj));
         } else if(obj instanceof Boolean){
-            return new BooleanValue(name, (Boolean) obj);
+            return new BooleanValue((Boolean) obj);
         } else if(Types.equals(LIST_TYPE, Types.getRawType(obj.getClass()))){
             List<Value> values = (List<Value>) obj;
-            return new ArrayValue(name, values.toArray(new Value[values.size()]));
+            return new ArrayValue(values.toArray(new Value[values.size()]));
         } else if(Types.equals(MAP_TYPE, Types.getRawType(obj.getClass()))){
-            return new ObjectValue(name, ((Map<String, Value>) obj));
+            return new ObjectValue(((Map<String, Value>) obj));
         } else{
             throw new IllegalStateException("Unknown type: " + obj.getClass().getName());
         }
@@ -48,21 +44,11 @@ public final class Values{
 
     private static abstract class AbstractValue
     implements Value{
-        protected final String name;
-
-        protected AbstractValue(String name){
-            this.name = name;
-        }
-
         @Override
         public boolean isNull(){
             return false;
         }
 
-        @Override
-        public String name(){
-            return this.name;
-        }
 
         @Override
         public byte asByte() {
@@ -110,11 +96,6 @@ public final class Values{
         }
 
         @Override
-        public Value asObject() {
-            throw new UnsupportedOperationException("Not of type Object");
-        }
-
-        @Override
         public Value[] asArray() {
             throw new UnsupportedOperationException("Not of type Array");
         }
@@ -144,13 +125,12 @@ public final class Values{
     extends AbstractValue{
         private final Map<String, Value> values;
 
-        public ObjectValue(String name, Map<String, Value> values){
-            super(name);
+        public ObjectValue(Map<String, Value> values){
             this.values = values;
         }
 
-        public ObjectValue(String name){
-            this(name, new HashMap<String, Value>());
+        public ObjectValue(){
+            this(new HashMap<String, Value>());
         }
 
         @Override
@@ -193,8 +173,7 @@ public final class Values{
     extends AbstractValue{
         private final String value;
 
-        public StringValue(String name, String value){
-            super(name);
+        public StringValue(String value){
             this.value = value;
         }
 
@@ -226,8 +205,7 @@ public final class Values{
     extends AbstractValue{
         private final Number value;
 
-        public NumberValue(String name, Number value){
-            super(name);
+        public NumberValue(Number value){
             this.value = value;
         }
 
@@ -277,8 +255,7 @@ public final class Values{
     extends AbstractValue{
         private Value[] values;
 
-        public ArrayValue(String name, Value[] values){
-            super(name);
+        public ArrayValue(Value[] values){
             this.values = values;
         }
 
@@ -316,9 +293,7 @@ public final class Values{
 
     public static final class NullValue
     extends AbstractValue{
-        public NullValue(String name){
-            super(name);
-        }
+        public static final NullValue NULL = new NullValue();
 
         @Override
         public boolean isNull(){
@@ -338,10 +313,12 @@ public final class Values{
 
     public static final class BooleanValue
     extends AbstractValue{
+        public static final BooleanValue TRUE = new BooleanValue(true);
+        public static final BooleanValue FALSE = new BooleanValue(false);
+
         private final boolean value;
 
-        public BooleanValue(String name, boolean value){
-            super(name);
+        public BooleanValue(boolean value){
             this.value = value;
         }
 

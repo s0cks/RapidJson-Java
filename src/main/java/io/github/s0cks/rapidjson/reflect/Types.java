@@ -3,14 +3,19 @@ package io.github.s0cks.rapidjson.reflect;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.NoSuchElementException;
 
 public final class Types{
+    private static final Type[] EMPTY_TYPE_ARRAY = new Type[0];
+
     public static final Type TYPE_STRING = new TypeToken<String>(){}.rawType;
     public static final Type TYPE_BYTE = new TypeToken<Byte>(){}.rawType;
     public static final Type TYPE_SHORT = new TypeToken<Short>(){}.rawType;
@@ -36,6 +41,165 @@ public final class Types{
         } else{
             return t;
         }
+    }
+
+    private static Type getGenericSupertype(Type ctx, Class<?> rawType, Class<?> toResolve){
+        if(toResolve == rawType){
+            return ctx;
+        }
+
+        if(toResolve.isInterface()){
+            Class<?>[] interfaces = rawType.getInterfaces();
+            for(int i = 0; i < interfaces.length; i++){
+                if(interfaces[i] == toResolve){
+                    return rawType.getGenericInterfaces()[i];
+                } else if(toResolve.isAssignableFrom(interfaces[i])){
+                    return getGenericSupertype(rawType.getGenericInterfaces()[i], interfaces[i], toResolve);
+                }
+            }
+        }
+
+        if(!rawType.isInterface()){
+            while(rawType != Object.class){
+                Class<?> rawSuperType = rawType.getSuperclass();
+                if(rawSuperType == toResolve){
+                    return rawType.getGenericSuperclass();
+                } else if(toResolve.isAssignableFrom(rawSuperType)){
+                    return getGenericSupertype(rawType.getGenericSuperclass(), rawSuperType, toResolve);
+                }
+                rawType = rawSuperType;
+            }
+        }
+
+        return toResolve;
+    }
+
+    public static GenericArrayType arrayOf(Type compType){
+        return new GenericArrayTypeImpl(compType);
+    }
+
+    public static WildcardType subtypeOf(Type bound){
+        return new WildcardTypeImpl(new Type[]{ bound }, EMPTY_TYPE_ARRAY);
+    }
+
+    public static WildcardType supertypeOf(Type bound){
+        return new WildcardTypeImpl(new Type[]{ Object.class }, new Type[]{ bound });
+    }
+
+    public static ParameterizedType newParameterizedTypeWithOwner(Type owner, Type raw, Type... args){
+        return new ParameterizedTypeImpl(owner, raw, args);
+    }
+
+    public static Type resolve(Type ctx, Class<?> ctxRawType, Type toResolve){
+        while(true){
+            if(toResolve instanceof TypeVariable){
+                TypeVariable<?> tv = (TypeVariable<?>) toResolve;
+                toResolve = resolveTypeVariable(ctx, ctxRawType, tv);
+                if(toResolve == tv){
+                    return toResolve;
+                }
+            } else if(toResolve instanceof Class && ((Class<?>) toResolve).isArray()){
+                Class<?> original = (Class<?>) toResolve;
+                Type compType = original.getComponentType();
+                Type newCompType = resolve(ctx, ctxRawType, compType);
+                return compType == newCompType ? original : arrayOf(newCompType);
+            } else if(toResolve instanceof GenericArrayType){
+                GenericArrayType original = (GenericArrayType) toResolve;
+                Type compType = original.getGenericComponentType();
+                Type newCompType = resolve(ctx, ctxRawType, compType);
+                return compType == newCompType ? original : arrayOf(newCompType);
+            } else if(toResolve instanceof ParameterizedType){
+                ParameterizedType original = (ParameterizedType) toResolve;
+                Type owner = original.getOwnerType();
+                Type newOwner = resolve(ctx, ctxRawType, owner);
+                boolean changed = newOwner != owner;
+
+                Type[] args = original.getActualTypeArguments();
+                for(int i = 0; i < args.length; i++){
+                    Type resolvedType = resolve(ctx, ctxRawType, args[i]);
+                    if(resolvedType != args[i]){
+                        if(!changed){
+                            args = args.clone();
+                            changed = true;
+                        }
+                        args[i] = resolvedType;
+                    }
+                }
+
+                return changed ? newParameterizedTypeWithOwner(newOwner, original.getRawType(), args) : original;
+            } else if(toResolve instanceof WildcardType){
+                WildcardType original = (WildcardType) toResolve;
+                Type[] originalLower = original.getLowerBounds();
+                Type[] originalUpper = original.getUpperBounds();
+
+                if(originalLower.length == 1){
+                    Type lower = resolve(ctx, ctxRawType, originalLower[0]);
+                    if(lower != originalLower[0]){
+                        return supertypeOf(lower);
+                    }
+                } else if(originalUpper.length == 1){
+                    Type upper = resolve(ctx, ctxRawType, originalUpper[0]);
+                    if(upper != originalUpper[0]){
+                        return subtypeOf(upper);
+                    }
+                }
+
+                return original;
+            } else{
+                return toResolve;
+            }
+        }
+    }
+
+    private static Type resolveTypeVariable(Type ctx, Class<?> ctxRawType, TypeVariable tv){
+        Class<?> dec = declaringClassOf(tv);
+
+        if(dec == null){
+            return tv;
+        }
+
+        Type decBy = getGenericSupertype(ctx, ctxRawType, dec);
+        if(decBy instanceof ParameterizedType){
+            int index = indexOf(dec.getTypeParameters(), tv);
+            return ((ParameterizedType) decBy).getActualTypeArguments()[index];
+        }
+
+        return tv;
+    }
+
+    private static int indexOf(Object[] array, Object toFind){
+        for(int i = 0; i < array.length; i++){
+            if(toFind.equals(array[i])){
+                return i;
+            }
+        }
+
+        throw new NoSuchElementException();
+    }
+
+    private static Class<?> declaringClassOf(TypeVariable<?> typeVariable){
+        GenericDeclaration genDec = typeVariable.getGenericDeclaration();
+        return genDec instanceof Class ? (Class<?>) genDec : null;
+    }
+
+    private static Type getSuperType(Type ctx, Class<?> ctxRawType, Class<?> superType){
+        if(!superType.isAssignableFrom(ctxRawType)){
+            throw new IllegalArgumentException("super type not assignable from ctxRawType");
+        }
+        return resolve(ctx, ctxRawType, getGenericSupertype(ctx, ctxRawType, superType));
+    }
+
+    public static Type getCollectionElementType(Type ctx, Class<?> ctxRawType){
+        Type collType = getSuperType(ctx, ctxRawType, Collection.class);
+        if(collType instanceof WildcardType){
+            collType = ((WildcardType) collType).getUpperBounds()[0];
+        }
+
+        if(collType instanceof ParameterizedType){
+            return ((ParameterizedType) collType).getActualTypeArguments()[0];
+        }
+
+        return Object.class;
     }
 
     public static boolean array(Type t){

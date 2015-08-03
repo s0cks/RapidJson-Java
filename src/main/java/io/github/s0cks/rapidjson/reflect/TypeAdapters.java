@@ -1,10 +1,9 @@
-package io.github.s0cks.rapidjson.reflect.adapter;
+package io.github.s0cks.rapidjson.reflect;
 
 import io.github.s0cks.rapidjson.Value;
 import io.github.s0cks.rapidjson.Values;
-import io.github.s0cks.rapidjson.reflect.TypeAdapter;
 
-public final class TypeAdapters{
+final class TypeAdapters{
     public static final TypeAdapter<Boolean> BOOLEAN_ADAPTER = new TypeAdapter<Boolean>() {
         @Override
         public Boolean deserialize(Class<Boolean> booleanClass, Value v) {
@@ -13,7 +12,7 @@ public final class TypeAdapters{
 
         @Override
         public Value serialize(Boolean value) {
-            return new Values.BooleanValue(null, value);
+            return new Values.BooleanValue(value);
         }
     };
 
@@ -25,7 +24,7 @@ public final class TypeAdapters{
 
         @Override
         public Value serialize(Integer value) {
-            return new Values.NumberValue(null, value);
+            return new Values.NumberValue(value);
         }
     };
 
@@ -37,7 +36,7 @@ public final class TypeAdapters{
 
         @Override
         public Value serialize(String value) {
-            return new Values.StringValue(null, value);
+            return new Values.StringValue(value);
         }
     };
 
@@ -49,7 +48,7 @@ public final class TypeAdapters{
 
         @Override
         public Value serialize(Short value) {
-            return new Values.NumberValue(null, value);
+            return new Values.NumberValue(value);
         }
     };
 
@@ -61,7 +60,7 @@ public final class TypeAdapters{
 
         @Override
         public Value serialize(Double value) {
-            return new Values.NumberValue(null, value);
+            return new Values.NumberValue(value);
         }
     };
 
@@ -73,7 +72,7 @@ public final class TypeAdapters{
 
         @Override
         public Value serialize(Byte value) {
-            return new Values.NumberValue(null, value);
+            return new Values.NumberValue(value);
         }
     };
 
@@ -85,7 +84,7 @@ public final class TypeAdapters{
 
         @Override
         public Value serialize(Long value) {
-            return new Values.NumberValue(null, value);
+            return new Values.NumberValue(value);
         }
     };
 
@@ -97,7 +96,7 @@ public final class TypeAdapters{
 
         @Override
         public Value serialize(Float value) {
-            return new Values.NumberValue(null, value);
+            return new Values.NumberValue(value);
         }
     };
 }
