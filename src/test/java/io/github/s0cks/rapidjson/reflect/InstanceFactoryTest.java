@@ -2,6 +2,7 @@ package io.github.s0cks.rapidjson.reflect;
 
 import io.github.s0cks.rapidjson.RapidJson;
 import io.github.s0cks.rapidjson.RapidJsonBuilder;
+import io.github.s0cks.rapidjson.SerializedName;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -45,7 +46,7 @@ public class InstanceFactoryTest {
     }
 
     private static final class Colors{
-        @io.github.s0cks.rapidjson.Name("colorz") private final Color[] colors;
+        @SerializedName("colorz") private final Color[] colors;
         private final boolean[] flags;
         private final String[] names;
 

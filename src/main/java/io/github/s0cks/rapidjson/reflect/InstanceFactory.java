@@ -1,7 +1,7 @@
 package io.github.s0cks.rapidjson.reflect;
 
 import io.github.s0cks.rapidjson.JsonException;
-import io.github.s0cks.rapidjson.Name;
+import io.github.s0cks.rapidjson.SerializedName;
 import io.github.s0cks.rapidjson.RapidJson;
 import io.github.s0cks.rapidjson.Value;
 import io.github.s0cks.rapidjson.Values;
@@ -64,7 +64,7 @@ public final class InstanceFactory{
     }
 
     private String getFieldName(Field f){
-        return f.isAnnotationPresent(Name.class) ? f.getAnnotation(Name.class).value() : f.getName();
+        return f.isAnnotationPresent(SerializedName.class) ? f.getAnnotation(SerializedName.class).value() : f.getName();
     }
 
     @SuppressWarnings("unchecked")
