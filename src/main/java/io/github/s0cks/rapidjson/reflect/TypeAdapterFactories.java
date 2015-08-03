@@ -4,6 +4,7 @@ import io.github.s0cks.rapidjson.Value;
 import io.github.s0cks.rapidjson.Values;
 
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
 
 final class TypeAdapterFactories{
@@ -37,7 +38,7 @@ final class TypeAdapterFactories{
         }
     };
 
-    public static final TypeAdapterFactory LIST_FACTORY = new TypeAdapterFactory() {
+    public static final TypeAdapterFactory COLLECTION_FACTORY = new TypeAdapterFactory() {
         @Override
         public <T> boolean can(TypeToken<T> token) {
             return List.class.isAssignableFrom(token.rawType);
@@ -47,42 +48,52 @@ final class TypeAdapterFactories{
         @SuppressWarnings("unchecked")
         public <T> TypeAdapter<T> create(InstanceFactory factory, TypeToken<T> token) {
             Class<? super T> rawType = token.rawType;
-            if(!List.class.isAssignableFrom(rawType) || rawType == List.class){
+            if(!Collection.class.isAssignableFrom(rawType) || rawType == Collection.class){
                 return null;
             }
             Type elemType = Types.getCollectionElementType(token.type, rawType);
             TypeAdapter<?> adapter = factory.getAdapter(elemType);
             ObjectConstructor<T> constructor = ObjectConstructorFactory.get(token);
-            return (TypeAdapter<T>) new ListTypeAdapter<>(elemType, adapter, constructor);
+            return (TypeAdapter<T>) new ListTypeAdapter<>(elemType, adapter, constructor, factory);
         }
     };
 
     private static final class ListTypeAdapter<T>
-    implements TypeAdapter<List<T>>{
+    implements TypeAdapter<Collection<T>>{
         private final Type elemType;
         private final TypeAdapter adapter;
         private final ObjectConstructor<?> constructor;
+        private final InstanceFactory factory;
 
-        private ListTypeAdapter(Type elemType, TypeAdapter adapter, ObjectConstructor<?> constructor){
+        private ListTypeAdapter(Type elemType, TypeAdapter adapter, ObjectConstructor<?> constructor, InstanceFactory factory){
             this.elemType = elemType;
             this.adapter = adapter;
             this.constructor = constructor;
+            this.factory = factory;
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public List<T> deserialize(Class<List<T>> listClass, Value v) {
-            List<T> tList = (List<T>) this.constructor.construct();
+        public Collection<T> deserialize(Class<Collection<T>> listClass, Value v) {
+            Collection<T> tList = (Collection<T>) this.constructor.construct();
 
             for(Value value : v.asArray()){
-                tList.add((T) this.adapter.deserialize((Class) this.elemType, value));
+                try{
+                    if(this.adapter != null){
+                        tList.add((T) this.adapter.deserialize((Class) this.elemType, value));
+                    } else{
+                        tList.add((T) this.factory.create((Class) this.elemType, value));
+                    }
+                } catch(Exception e){
+                    throw new RuntimeException(e);
+                }
             }
 
             return tList;
         }
 
         @Override
-        public Value serialize(List<T> value) {
+        public Value serialize(Collection<T> value) {
             return null;
         }
     }

@@ -31,7 +31,7 @@ public final class InstanceFactory{
         this.adapters.put(Types.TYPE_SHORT, TypeAdapters.SHORT_ADAPTER);
         this.adapters.put(Types.TYPE_STRING, TypeAdapters.STRING_ADAPTER);
         this.factories = factories;
-        this.factories.add(TypeAdapterFactories.LIST_FACTORY);
+        this.factories.add(TypeAdapterFactories.COLLECTION_FACTORY);
         this.factories.add(TypeAdapterFactories.ENUM_FACTORY);
     }
 

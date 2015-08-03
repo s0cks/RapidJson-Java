@@ -117,7 +117,6 @@ public final class JsonParser{
         while(this.isNumber(c = this.next()) || (c == '.' && !buffer.contains("."))){
             buffer += c;
         }
-        System.out.println(buffer);
         return new Values.NumberValue(new FlexibleNumber(buffer));
     }
 

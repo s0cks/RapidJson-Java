@@ -35,7 +35,6 @@ final class ObjectConstructorFactory{
                 }
             };
         } catch(NoSuchMethodException e){
-            e.printStackTrace(System.err);
             return null;
         }
     }
