@@ -39,6 +39,13 @@ public class InstanceFactoryTest {
         for(Name name : names){
             System.out.println(name);
         }
+
+        start = System.nanoTime();
+        names = rapidJson.fromJson("[\"BOB\", \"GEORGE\"]", new TypeToken<LinkedList<Name>>(){});
+        System.out.println("Deserialization Took: " + TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)) + "ms");
+        for(Name name : names){
+            System.out.println(name);
+        }
     }
 
     private enum Name{

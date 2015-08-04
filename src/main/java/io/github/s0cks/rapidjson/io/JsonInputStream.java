@@ -4,55 +4,58 @@ import io.github.s0cks.rapidjson.JsonException;
 import io.github.s0cks.rapidjson.Value;
 import io.github.s0cks.rapidjson.Values;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public final class JsonParser{
-    private final String json;
-    private int ptr;
+public final class JsonInputStream
+implements Closeable {
+    private final InputStream in;
+    private char peek = '\0';
     private String name;
-    private int col;
-    private int row;
+    private String buffer;
 
-    public JsonParser(String json){
-        this.json = json;
-        this.ptr = 0;
+    public JsonInputStream(InputStream in){
+        if(in == null) throw new NullPointerException("input == null");
+        this.in = in;
     }
 
     public Value parse()
-    throws JsonException {
+    throws IOException, JsonException {
         switch(this.peek()){
             case '{': return this.parseObject();
-            case '[': {
+            case '[':{
                 this.nextReal();
                 return this.parseArray();
             }
-            default: throw new JsonException("Invalid syntax @" + this.col + "," + this.row);
+            default: throw new JsonException("Invalid syntax");
         }
     }
 
     private Value parseObject()
-    throws JsonException {
+    throws IOException, JsonException{
         Map<String, Value> values = new HashMap<>();
         char c;
-        it: while ((c = this.nextReal()) != '}') {
-            switch (c) {
-                case '"': {
+        it: while((c = this.nextReal()) != '}'){
+            switch(c){
+                case '"':{
                     this.name = this.parseName();
                     c = this.nextReal();
                     break;
                 }
                 case ',':
-                case '{': {
+                case '{':{
                     continue it;
                 }
                 case ':':{
                     c = this.nextReal();
                     break;
                 }
-                default: {
+                default:{
                     break;
                 }
             }
@@ -61,42 +64,44 @@ public final class JsonParser{
                 c = this.nextReal();
             }
 
-            if (c == '"') {
+            if(c == '"'){
                 values.put(this.name, this.parseString());
-            } else if (isNumber(c)) {
+            } else if(c >= '0' && c <= '9'){
                 values.put(this.name, this.parseNumber(c));
-            } else if (isBoolean(c)) {
+            } else if(c == 't' || c == 'f'){
                 values.put(this.name, this.parseBoolean(c));
-            } else if (isNull(c)) {
+            } else if(c == 'n'){
                 values.put(this.name, this.parseNull());
             } else if(c == '['){
                 values.put(this.name, this.parseArray());
+            } else if(c == '{'){
+                values.put(this.name, this.parseObject());
             } else if(c == '\0'){
-                throw new JsonException("Invalid Syntax [end of document]@" + this.col + "," + this.row);
+                throw new JsonException("End of stream");
             } else if(c == '}'){
                 break;
             } else{
-                throw new JsonException("Invalid syntax @ " + this.name + " with (" + c + ") @" + this.col + "," + this.row);
+                throw new JsonException("Invalid syntax (" + this.name + "): " + c);
             }
         }
 
-        return Values.of(values);
+        return new Values.ObjectValue(values);
     }
 
     private Value parseArray()
-    throws JsonException{
+    throws IOException, JsonException{
         List<Value> values = new LinkedList<>();
         char c;
         while((c = this.nextReal()) != '\0'){
-            if (c == '"') {
+            if(c == '"'){
                 values.add(this.parseString());
-            } else if (isNumber(c)) {
+            } else if(c >= '0' && c <= '9'){
                 values.add(this.parseNumber(c));
-            } else if (isBoolean(c)) {
+            } else if(c == 't' || c == 'f'){
                 values.add(this.parseBoolean(c));
-            } else if (isNull(c)) {
+            } else if(c == 'n'){
                 values.add(this.parseNull());
-            } else if (c == '{') {
+            } else if(c == '{'){
                 values.add(this.parseObject());
             } else if(c == '['){
                 values.add(this.parseArray());
@@ -104,116 +109,108 @@ public final class JsonParser{
                 // Fallthrough
             } else if(c == ']'){
                 break;
-            } else {
-                throw new JsonException("Invalid syntax " + this.name + ":" + c + "@" + this.col + "," + this.row);
+            } else{
+                throw new JsonException("Invalid syntax: " + c);
             }
         }
 
-        return Values.of(values);
+        return new Values.ArrayValue(values.toArray(new Value[values.size()]));
     }
 
-    private Value parseNumber(char c){
-        String buffer = c + "";
-        while(this.isNumber(c = this.next()) || (c == '.' && !buffer.contains("."))){
-            buffer += c;
+    private Value parseNumber(char c)
+    throws IOException{
+        this.buffer = c + "";
+        while(((c = this.next()) >= '0' && c <= '9') || (c == '.' && !this.buffer.contains("."))){
+            this.buffer += c;
         }
-        return new Values.NumberValue(new FlexibleNumber(buffer));
+        return new Values.NumberValue(new FlexibleNumber(this.buffer));
     }
 
-    private Value parseNull(){
-        for(int i = 0; i < 4; i++){
-            this.next();
-        }
+    private Value parseNull()
+    throws IOException{
+        this.skip(4);
         return Values.NullValue.NULL;
     }
 
     private Value parseBoolean(char c)
-    throws JsonException {
+    throws IOException, JsonException {
         switch(c){
             case 't':{
-                for(int i = 0; i < 3; i++){
-                    this.next();
-                }
+                this.skip(3);
                 return Values.BooleanValue.TRUE;
             }
             case 'f':{
-                for(int i = 0; i < 4; i++){
-                    this.next();
-                }
+                this.skip(4);
                 return Values.BooleanValue.FALSE;
             }
             default:{
-                throw new JsonException("Invalid syntax @" + this.col + "," + this.row);
+                throw new JsonException("Invalid syntax: " + c);
             }
         }
     }
 
-    private String parseName(){
-        String buffer = "";
+    private String parseName()
+    throws IOException{
+        this.buffer = "";
         char c;
         while((c = this.next()) != '"'){
-            buffer += c;
+            this.buffer += c;
         }
-        return buffer;
+        return this.buffer;
     }
 
-    private Value parseString(){
-        String buffer = "";
+    private Value parseString()
+    throws IOException{
+        this.buffer = "";
         char c;
         while((c = this.next()) != '"'){
             switch(c){
                 case '\\':{
                     switch(c = this.next()){
                         case '\\':{
-                            buffer += '\\';
+                            this.buffer += '\\';
                             break;
                         }
                         case 't':{
-                            buffer += '\t';
+                            this.buffer += '\t';
                             break;
                         }
                         case '/':{
                             break;
                         }
                         default:{
-                            buffer += c;
+                            this.buffer += c;
                             break;
                         }
                     }
                 }
                 default:{
-                    buffer += c;
+                    this.buffer += c;
                     break;
                 }
             }
         }
-        return new Values.StringValue(buffer);
+
+        return new Values.StringValue(this.buffer);
     }
 
-    private boolean isNumber(char c){
-        return (c >= '0' && c <= '9');
+    private void skip(int amount)
+    throws IOException{
+        for(int i = 0; i < amount; i++){
+            this.next();
+        }
     }
 
-    private boolean isBoolean(char c){
-        return c == 't' || c == 'f';
-    }
-
-    private boolean isNull(char c){
-        return c == 'n';
-    }
-
-    private char nextReal(){
+    private char nextReal()
+    throws IOException{
         char c;
-        while((whitespace(c = this.next())));
+        while(this.isWhitespace(c = this.next()));
         return c;
     }
 
-    private boolean whitespace(char c){
+    private boolean isWhitespace(char c){
         switch(c){
-            case '\n':{
-                this.row++;
-                this.col = 0;
-            }
+            case '\n':
             case '\t':
             case ' ':
             case '\r':{
@@ -225,17 +222,35 @@ public final class JsonParser{
         }
     }
 
-    private char next(){
-        char c = this.peek();
-        if(c != '\0') {
-            this.col++;
-            this.ptr++;
+    private char next()
+    throws IOException{
+        char ret;
+        if(this.peek == '\0'){
+            ret = (char) this.in.read();
+        } else{
+            ret = this.peek;
+            this.peek = '\0';
         }
-        return c;
+        if(ret == '\0'){
+            throw new IllegalStateException("End of stream");
+        }
+        return ret;
     }
 
-    private char peek(){
-        return (this.ptr < this.json.length() ? this.json.charAt(this.ptr) : '\0');
+    private char peek()
+    throws IOException{
+        if(this.peek != '\0') {
+            throw new IllegalStateException("Already peeking");
+        }
+
+        this.peek = (char) this.in.read();
+        return this.peek;
+    }
+
+    @Override
+    public void close()
+    throws IOException {
+        this.in.close();
     }
 
     private static final class FlexibleNumber

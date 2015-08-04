@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.concurrent.TimeUnit;
 
 public class JsonParserTest {
     @Test
@@ -18,8 +19,8 @@ public class JsonParserTest {
             }
         }
 
-        JsonParser parser = new JsonParser(builder.toString());
-        Value v = parser.parse();
-        System.out.println(v);
+        long start = System.nanoTime();
+        Value v = new JsonInputStream(System.class.getResourceAsStream("/test.json")).parse();
+        System.out.println("New Parsing Took: " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms");
     }
 }
