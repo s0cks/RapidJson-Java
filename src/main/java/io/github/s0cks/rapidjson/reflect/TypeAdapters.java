@@ -1,7 +1,9 @@
 package io.github.s0cks.rapidjson.reflect;
 
 import io.github.s0cks.rapidjson.Value;
-import io.github.s0cks.rapidjson.Values;
+import io.github.s0cks.rapidjson.io.JsonOutputStream;
+
+import java.io.IOException;
 
 final class TypeAdapters{
     public static final TypeAdapter<Boolean> BOOLEAN_ADAPTER = new TypeAdapter<Boolean>() {
@@ -11,8 +13,12 @@ final class TypeAdapters{
         }
 
         @Override
-        public Value serialize(Boolean value) {
-            return new Values.BooleanValue(value);
+        public void serialize(Boolean value, JsonOutputStream jos) {
+            try {
+                jos.value(value);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     };
 
@@ -23,8 +29,12 @@ final class TypeAdapters{
         }
 
         @Override
-        public Value serialize(Integer value) {
-            return new Values.NumberValue(value);
+        public void serialize(Integer value, JsonOutputStream jos) {
+            try {
+                jos.value(value);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     };
 
@@ -35,8 +45,12 @@ final class TypeAdapters{
         }
 
         @Override
-        public Value serialize(String value) {
-            return new Values.StringValue(value);
+        public void serialize(String value, JsonOutputStream jos) {
+            try {
+                jos.value(value);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     };
 
@@ -47,8 +61,12 @@ final class TypeAdapters{
         }
 
         @Override
-        public Value serialize(Short value) {
-            return new Values.NumberValue(value);
+        public void serialize(Short value, JsonOutputStream jos) {
+            try {
+                jos.value(value);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     };
 
@@ -59,8 +77,12 @@ final class TypeAdapters{
         }
 
         @Override
-        public Value serialize(Double value) {
-            return new Values.NumberValue(value);
+        public void serialize(Double value, JsonOutputStream jos) {
+            try {
+                jos.value(value);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     };
 
@@ -71,8 +93,12 @@ final class TypeAdapters{
         }
 
         @Override
-        public Value serialize(Byte value) {
-            return new Values.NumberValue(value);
+        public void serialize(Byte value, JsonOutputStream jos) {
+            try {
+                jos.value(value);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     };
 
@@ -83,8 +109,12 @@ final class TypeAdapters{
         }
 
         @Override
-        public Value serialize(Long value) {
-            return new Values.NumberValue(value);
+        public void serialize(Long value, JsonOutputStream jos) {
+            try {
+                jos.value(value);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     };
 
@@ -95,8 +125,12 @@ final class TypeAdapters{
         }
 
         @Override
-        public Value serialize(Float value) {
-            return new Values.NumberValue(value);
+        public void serialize(Float value, JsonOutputStream jos) {
+            try {
+                jos.value(value);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     };
 }

@@ -1,6 +1,7 @@
 package io.github.s0cks.rapidjson;
 
 import io.github.s0cks.rapidjson.io.JsonInputStream;
+import io.github.s0cks.rapidjson.io.JsonOutputStream;
 import io.github.s0cks.rapidjson.reflect.InstanceFactory;
 import io.github.s0cks.rapidjson.reflect.TypeAdapter;
 import io.github.s0cks.rapidjson.reflect.TypeAdapterFactory;
@@ -9,6 +10,7 @@ import io.github.s0cks.rapidjson.reflect.TypeToken;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -60,14 +62,30 @@ public final class RapidJson{
         }
     }
 
-    public String toJson(Object obj)
-    throws JsonException{
-        Value v = new Values.ObjectValue();
-        try {
-            this.instanceFactory.emit(obj, v);
-        } catch (IllegalAccessException e) {
-            throw new JsonException(e.getMessage());
+    public String toJson(Object obj){
+        try(StringOutputStream sos = new StringOutputStream();
+            JsonOutputStream jos = new JsonOutputStream(sos)){
+
+            this.instanceFactory.write(obj, jos);
+            return sos.toString();
+        } catch(Exception e){
+            throw new RuntimeException(e);
         }
-        return v.toString();
+    }
+
+    private static final class StringOutputStream
+    extends OutputStream{
+        private String str = "";
+
+        @Override
+        public void write(int i)
+        throws IOException {
+            this.str += (char) i;
+        }
+
+        @Override
+        public String toString(){
+            return this.str;
+        }
     }
 }
