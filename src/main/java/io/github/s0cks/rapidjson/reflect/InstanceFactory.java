@@ -1,7 +1,6 @@
 package io.github.s0cks.rapidjson.reflect;
 
 import io.github.s0cks.rapidjson.JsonException;
-import io.github.s0cks.rapidjson.RapidJson;
 import io.github.s0cks.rapidjson.SerializedName;
 import io.github.s0cks.rapidjson.Value;
 import io.github.s0cks.rapidjson.io.JsonOutputStream;
@@ -18,10 +17,8 @@ import java.util.Map;
 public final class InstanceFactory{
     private final Map<Type, TypeAdapter> adapters;
     private final List<TypeAdapterFactory> factories;
-    private final RapidJson json;
 
-    public InstanceFactory(RapidJson json, Map<Type, TypeAdapter> adapters, List<TypeAdapterFactory> factories){
-        this.json = json;
+    public InstanceFactory(Map<Type, TypeAdapter> adapters, List<TypeAdapterFactory> factories){
         this.adapters = adapters;
         this.adapters.put(Types.TYPE_BOOLEAN, TypeAdapters.BOOLEAN_ADAPTER);
         this.adapters.put(Types.TYPE_BYTE, TypeAdapters.BYTE_ADAPTER);

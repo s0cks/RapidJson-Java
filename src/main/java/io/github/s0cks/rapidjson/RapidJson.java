@@ -19,11 +19,11 @@ public final class RapidJson{
     private final InstanceFactory instanceFactory;
 
     public RapidJson(){
-        this.instanceFactory = new InstanceFactory(this, new HashMap<Type, TypeAdapter>(), new LinkedList<TypeAdapterFactory>());
+        this.instanceFactory = new InstanceFactory(new HashMap<Type, TypeAdapter>(), new LinkedList<TypeAdapterFactory>());
     }
 
     protected RapidJson(RapidJsonBuilder builder){
-        this.instanceFactory = new InstanceFactory(this, builder.adapters, builder.factories);
+        this.instanceFactory = new InstanceFactory(builder.adapters, builder.factories);
     }
 
     public <T> T fromJson(String json, Class<T> tClass)
